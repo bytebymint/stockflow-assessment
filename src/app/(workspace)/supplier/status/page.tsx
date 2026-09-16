@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { CircleAlert, Clock3, ShieldCheck } from "lucide-react";
+import { BellRing, CircleAlert, Clock3, ShieldCheck } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireRole } from "@/lib/auth/session";
+import { getDatabase } from "@/lib/database";
 
 export const metadata: Metadata = { title: "Supplier account status" };
 
@@ -18,6 +19,17 @@ export default async function SupplierStatusPage() {
   }
 
   const isRejected = user.supplierStatus === "REJECTED";
+  const latestStatusUpdate = await getDatabase().notification.findFirst({
+    where: {
+      userId: user.id,
+      type: "SUPPLIER_STATUS_CHANGED",
+    },
+    select: {
+      message: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
   const navigation = [
     { label: "Account status", href: "/supplier/status", icon: Clock3 },
   ];
@@ -69,7 +81,7 @@ export default async function SupplierStatusPage() {
                 </div>
                 <p className="text-muted-foreground mt-3 leading-6">
                   {isRejected
-                    ? "Product listing remains unavailable. The supplier-review workflow added in Step 8 will provide the next action and status notification."
+                    ? "Product listing is unavailable while this decision is active. An administrator can reopen the review or approve the account later."
                     : "No action is required right now. Product listing remains unavailable until approval is recorded."}
                 </p>
                 <div className="border-border/80 bg-muted/50 mt-5 flex gap-3 rounded-lg border p-4 text-sm leading-6">
@@ -86,6 +98,32 @@ export default async function SupplierStatusPage() {
             </div>
           </CardContent>
         </Card>
+
+        {latestStatusUpdate ? (
+          <Card>
+            <CardContent>
+              <div className="flex items-start gap-4">
+                <span className="bg-info-subtle text-info-foreground flex size-11 shrink-0 items-center justify-center rounded-xl">
+                  <BellRing className="size-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-semibold">Latest administrator update</p>
+                  <p className="text-muted-foreground mt-2 text-sm leading-6">
+                    {latestStatusUpdate.message}
+                  </p>
+                  <p className="text-muted-foreground mt-3 text-xs">
+                    <time dateTime={latestStatusUpdate.createdAt.toISOString()}>
+                      {new Intl.DateTimeFormat("en-GB", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }).format(latestStatusUpdate.createdAt)}
+                    </time>
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </AppShell>
   );
