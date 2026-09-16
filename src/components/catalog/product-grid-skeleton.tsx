@@ -1,13 +1,22 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { cn } from "@/lib/utils";
+
 type ProductGridSkeletonProps = {
+  className?: string;
   count?: number;
 };
 
-export function ProductGridSkeleton({ count = 6 }: ProductGridSkeletonProps) {
+export function ProductGridSkeleton({
+  className,
+  count = 6,
+}: ProductGridSkeletonProps) {
   return (
     <div
-      className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      className={cn(
+        "grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+        className,
+      )}
       aria-label="Loading products"
       aria-busy="true"
     >
