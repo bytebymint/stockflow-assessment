@@ -2,7 +2,7 @@
 
 StockFlow is a multi-role inventory and order management platform for administrators, suppliers, and customers. This repository is being built as a take-home technical assessment using small, reviewable commits.
 
-> Current status: application shells and the PostgreSQL data model are ready. Product features have not been implemented yet.
+> Current status: role-based authentication, registration, and protected workspace entry points are ready. Product features have not been implemented yet.
 
 ## Planned stack
 
@@ -44,6 +44,21 @@ The database health endpoint is available at `/api/health/database`. It returns 
 
 The seed command requires all four `DEMO_*_PASSWORD` values from `.env`. It creates deterministic assessment records and can be run repeatedly without duplicating them. Passwords are never printed or stored in plain text.
 
+### Authentication
+
+Set `AUTH_SECRET` to a long random value before starting the app. You can generate one with `npx auth secret`.
+
+Customers and suppliers can register through `/register`. Customer accounts are active immediately; new supplier accounts are created with a pending approval state. Administrator registration is intentionally unavailable—the evaluator admin account is created by the seed command.
+
+The deterministic demo emails are:
+
+- `admin@stockflow.demo`
+- `customer@stockflow.demo`
+- `supplier@stockflow.demo`
+- `pending@stockflow.demo`
+
+Their passwords come from the matching `DEMO_*_PASSWORD` environment variables. Protected pages read the current role and supplier status from PostgreSQL rather than trusting session claims alone.
+
 ## Quality checks
 
 ```bash
@@ -55,7 +70,7 @@ npm run build
 
 ## Assessment requirement tracker
 
-- [ ] Authentication for admin, supplier, and customer roles
+- [x] Authentication for admin, supplier, and customer roles
 - [ ] Categorized product catalog
 - [ ] Supplier product and stock management
 - [ ] Atomic ordering without negative stock

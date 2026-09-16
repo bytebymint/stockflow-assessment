@@ -91,7 +91,7 @@ export default function Home() {
                   className="bg-primary size-1.5 rounded-full"
                   aria-hidden="true"
                 />
-                Interface foundation · Step 2
+                Role-based access is ready
               </Badge>
               <h1 className="text-foreground mt-6 text-4xl leading-[1.08] font-bold tracking-[-0.035em] text-balance sm:text-5xl lg:text-6xl">
                 Inventory clarity from shelf to delivery.
@@ -102,22 +102,22 @@ export default function Home() {
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href="/ui-preview"
+                  href="/register"
                   className={cn(buttonVariants({ size: "lg" }), "group")}
                 >
-                  Explore the UI system
+                  Create an account
                   <ArrowRight
                     className="transition-transform duration-200 group-hover:translate-x-0.5"
                     data-icon="inline-end"
                   />
                 </Link>
                 <Link
-                  href="#workflow"
+                  href="/sign-in"
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
                   )}
                 >
-                  See the workflow
+                  Sign in
                 </Link>
               </div>
               <ul
@@ -328,17 +328,17 @@ export default function Home() {
                   Designed for every operational role
                 </div>
                 <h2 className="mt-3 text-2xl font-bold tracking-tight text-balance text-white sm:text-3xl">
-                  Review the shared components and responsive workspace shell.
+                  Enter the right workspace with one secure account.
                 </h2>
               </div>
               <Link
-                href="/ui-preview"
+                href="/register"
                 className={cn(
                   buttonVariants({ size: "lg" }),
                   "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 shrink-0",
                 )}
               >
-                Open UI preview
+                Get started
                 <ArrowRight data-icon="inline-end" />
               </Link>
             </div>

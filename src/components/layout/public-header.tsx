@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Menu } from "lucide-react";
+import { ArrowRight, LogIn, Menu, UserPlus } from "lucide-react";
 
+import { auth } from "@/auth";
 import { StockFlowLogo } from "@/components/brand/stockflow-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { getWorkspacePath } from "@/lib/auth/paths";
 
 const navigation = [
   { label: "Platform", href: "#platform" },
@@ -19,7 +21,12 @@ const navigation = [
   { label: "For every role", href: "#roles" },
 ];
 
-export function PublicHeader() {
+export async function PublicHeader() {
+  const session = await auth();
+  const workspacePath = session?.user
+    ? getWorkspacePath(session.user)
+    : undefined;
+
   return (
     <header className="border-border/70 bg-background/90 sticky top-0 z-40 border-b backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-7xl min-w-0 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
@@ -40,17 +47,38 @@ export function PublicHeader() {
           ))}
         </nav>
 
-        <div className="hidden md:block">
-          <Link
-            href="/ui-preview"
-            className={cn(buttonVariants({ size: "sm" }), "group")}
-          >
-            View UI system
-            <ArrowRight
-              className="transition-transform duration-200 group-hover:translate-x-0.5"
-              data-icon="inline-end"
-            />
-          </Link>
+        <div className="hidden items-center gap-2 md:flex">
+          {workspacePath ? (
+            <Link
+              href={workspacePath}
+              className={cn(buttonVariants({ size: "sm" }), "group")}
+            >
+              Open workspace
+              <ArrowRight
+                className="transition-transform duration-200 group-hover:translate-x-0.5"
+                data-icon="inline-end"
+              />
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/register"
+                className={cn(buttonVariants({ size: "sm" }), "group")}
+              >
+                Create account
+                <ArrowRight
+                  className="transition-transform duration-200 group-hover:translate-x-0.5"
+                  data-icon="inline-end"
+                />
+              </Link>
+            </>
+          )}
         </div>
 
         <Sheet>
@@ -70,7 +98,7 @@ export function PublicHeader() {
             <SheetHeader className="border-b">
               <SheetTitle>Navigate StockFlow</SheetTitle>
               <SheetDescription>
-                Explore the product foundation and interface system.
+                Explore the platform or access your secure workspace.
               </SheetDescription>
             </SheetHeader>
             <nav
@@ -87,14 +115,36 @@ export function PublicHeader() {
                 </Link>
               ))}
             </nav>
-            <div className="mt-auto border-t p-4">
-              <Link
-                href="/ui-preview"
-                className={cn(buttonVariants(), "w-full")}
-              >
-                View UI system
-                <ArrowRight data-icon="inline-end" />
-              </Link>
+            <div className="mt-auto space-y-2 border-t p-4">
+              {workspacePath ? (
+                <Link
+                  href={workspacePath}
+                  className={cn(buttonVariants(), "w-full")}
+                >
+                  Open workspace
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "w-full",
+                    )}
+                  >
+                    <LogIn data-icon="inline-start" />
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/register"
+                    className={cn(buttonVariants(), "w-full")}
+                  >
+                    <UserPlus data-icon="inline-start" />
+                    Create account
+                  </Link>
+                </>
+              )}
             </div>
           </SheetContent>
         </Sheet>

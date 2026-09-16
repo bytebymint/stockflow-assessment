@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { Bell, ChevronDown } from "lucide-react";
 
 import { StockFlowLogo } from "@/components/brand/stockflow-logo";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export type AppNavigationItem = {
@@ -21,6 +20,7 @@ type AppShellProps = {
   activeHref: string;
   roleLabel: string;
   userName: string;
+  userEmail: string;
 };
 
 export function AppShell({
@@ -29,6 +29,7 @@ export function AppShell({
   activeHref,
   roleLabel,
   userName,
+  userEmail,
 }: AppShellProps) {
   return (
     <div className="bg-background min-h-dvh max-w-full min-w-0 overflow-x-hidden lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
@@ -77,8 +78,8 @@ export function AppShell({
           })}
         </nav>
 
-        <div className="border-sidebar-border border-t pt-4">
-          <button className="hover:bg-sidebar-accent focus-visible:ring-sidebar-ring/50 flex min-h-11 w-full items-center gap-3 rounded-lg px-2 text-left transition-colors focus-visible:ring-3 focus-visible:outline-none">
+        <div className="border-sidebar-border space-y-2 border-t pt-4">
+          <div className="flex min-h-11 items-center gap-3 px-2">
             <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-9 items-center justify-center rounded-full text-sm font-bold">
               {userName
                 .split(" ")
@@ -90,12 +91,15 @@ export function AppShell({
               <span className="block truncate text-sm font-semibold text-white">
                 {userName}
               </span>
-              <span className="text-sidebar-foreground/65 block text-xs">
-                Preview account
+              <span
+                className="text-sidebar-foreground/65 block truncate text-xs"
+                title={userEmail}
+              >
+                {userEmail}
               </span>
             </span>
-            <ChevronDown className="size-4" aria-hidden="true" />
-          </button>
+          </div>
+          <SignOutButton inverse />
         </div>
       </aside>
 
@@ -107,9 +111,12 @@ export function AppShell({
           <p className="text-muted-foreground hidden text-sm font-medium lg:block">
             {roleLabel} workspace
           </p>
-          <Button variant="outline" size="icon" aria-label="View notifications">
-            <Bell aria-hidden="true" />
-          </Button>
+          <div className="flex min-w-0 items-center gap-2 lg:hidden">
+            <span className="text-muted-foreground max-w-36 truncate text-xs font-medium sm:max-w-64">
+              {userName}
+            </span>
+            <SignOutButton compact />
+          </div>
         </header>
 
         <main

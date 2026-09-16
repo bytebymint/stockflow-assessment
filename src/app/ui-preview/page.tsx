@@ -41,6 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { requireRole } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -83,13 +84,16 @@ const inventoryRows = [
   },
 ];
 
-export default function UiPreviewPage() {
+export default async function UiPreviewPage() {
+  const user = await requireRole("ADMIN");
+
   return (
     <AppShell
       navigation={navigation}
       activeHref="#overview"
-      roleLabel="Supplier"
-      userName="Morgan Lee"
+      roleLabel="Design review"
+      userName={user.name}
+      userEmail={user.email}
     >
       <div className="mx-auto w-full max-w-7xl min-w-0 space-y-8 overflow-x-hidden">
         <PageHeader
