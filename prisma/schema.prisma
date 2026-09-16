@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  SUPPLIER
+  CUSTOMER
+}
+
+enum SupplierStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum NotificationType {
+  ORDER_CREATED
+  ORDER_STATUS_CHANGED
+  ORDER_CANCELLED
+  LOW_STOCK
+  SUPPLIER_STATUS_CHANGED
+}
+
+model User {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String          @db.VarChar(120)
+  email          String          @unique(map: "User_email_key") @db.VarChar(320)
+  passwordHash   String          @db.VarChar(255)
+  role           UserRole        @default(CUSTOMER)
+  supplierStatus SupplierStatus?
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
+
+  products          Product[]       @relation("SupplierProducts")
+  customerCheckouts CheckoutGroup[] @relation("CustomerCheckouts")
+  customerOrders    Order[]         @relation("CustomerOrders")
+  supplierOrders    Order[]         @relation("SupplierOrders")
+  notifications     Notification[]
+
+  @@index([role, supplierStatus], map: "User_role_supplierStatus_idx")
+  @@index([createdAt(sort: Desc)], map: "User_createdAt_idx")
+}
+
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique(map: "Category_name_key") @db.VarChar(80)
+  slug        String   @unique(map: "Category_slug_key") @db.VarChar(100)
+  description String?  @db.VarChar(240)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  products Product[]
+
+  @@index([createdAt(sort: Desc)], map: "Category_createdAt_idx")
+}
+
+model Product {
+  id                String    @id @default(uuid()) @db.Uuid
+  supplierId        String    @db.Uuid
+  categoryId        String?   @db.Uuid
+  name              String    @db.VarChar(160)
+  slug              String    @db.VarChar(180)
+  description       String    @db.Text
+  price             Decimal   @db.Decimal(12, 2)
+  stock             Int       @default(0)
+  lowStockThreshold Int       @default(5)
+  imageUrl          String?   @db.VarChar(2048)
+  imagePublicId     String?   @db.VarChar(255)
+  imageAlt          String?   @db.VarChar(180)
+  archivedAt        DateTime? @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @db.Timestamptz(3)
+
+  supplier   User        @relation("SupplierProducts", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  orderItems OrderItem[]
+
+  @@unique([supplierId, slug], map: "Product_supplierId_slug_key")
+  @@index([supplierId, archivedAt], map: "Product_supplierId_archivedAt_idx")
+  @@index([categoryId, archivedAt], map: "Product_categoryId_archivedAt_idx")
+  @@index([stock], map: "Product_stock_idx")
+  @@index([createdAt(sort: Desc)], map: "Product_createdAt_idx")
+  @@index([name(ops: raw("gin_trgm_ops")), description(ops: raw("gin_trgm_ops"))], type: Gin, map: "Product_search_idx")
+}
+
+model CheckoutGroup {
+  id         String   @id @default(uuid()) @db.Uuid
+  reference  String   @unique(map: "CheckoutGroup_reference_key") @db.VarChar(32)
+  customerId String   @db.Uuid
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  customer User    @relation("CustomerCheckouts", fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  orders   Order[]
+
+  @@index([customerId, createdAt(sort: Desc)], map: "CheckoutGroup_customerId_createdAt_idx")
+}
+
+model Order {
+  id              String      @id @default(uuid()) @db.Uuid
+  orderNumber     String      @unique(map: "Order_orderNumber_key") @db.VarChar(32)
+  checkoutGroupId String      @db.Uuid
+  customerId      String      @db.Uuid
+  supplierId      String      @db.Uuid
+  status          OrderStatus @default(PENDING)
+  subtotal        Decimal     @db.Decimal(12, 2)
+  confirmedAt     DateTime?   @db.Timestamptz(3)
+  shippedAt       DateTime?   @db.Timestamptz(3)
+  deliveredAt     DateTime?   @db.Timestamptz(3)
+  cancelledAt     DateTime?   @db.Timestamptz(3)
+  stockRestoredAt DateTime?   @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @db.Timestamptz(3)
+
+  checkoutGroup CheckoutGroup @relation(fields: [checkoutGroupId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  customer      User          @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  supplier      User          @relation("SupplierOrders", fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  items         OrderItem[]
+
+  @@unique([checkoutGroupId, supplierId], map: "Order_checkoutGroupId_supplierId_key")
+  @@index([customerId, createdAt(sort: Desc)], map: "Order_customerId_createdAt_idx")
+  @@index([supplierId, status, createdAt(sort: Desc)], map: "Order_supplierId_status_createdAt_idx")
+  @@index([status, createdAt(sort: Desc)], map: "Order_status_createdAt_idx")
+}
+
+model OrderItem {
+  id                      String   @id @default(uuid()) @db.Uuid
+  orderId                 String   @db.Uuid
+  productId               String   @db.Uuid
+  productNameSnapshot     String   @db.VarChar(160)
+  productImageUrlSnapshot String?  @db.VarChar(2048)
+  unitPriceSnapshot       Decimal  @db.Decimal(12, 2)
+  quantity                Int
+  lineTotal               Decimal  @db.Decimal(12, 2)
+  createdAt               DateTime @default(now()) @db.Timestamptz(3)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([orderId, productId], map: "OrderItem_orderId_productId_key")
+  @@index([productId], map: "OrderItem_productId_idx")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String           @db.VarChar(160)
+  message   String           @db.Text
+  href      String?          @db.VarChar(500)
+  readAt    DateTime?        @db.Timestamptz(3)
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId, readAt, createdAt(sort: Desc)], map: "Notification_userId_readAt_createdAt_idx")
+  @@index([type, createdAt(sort: Desc)], map: "Notification_type_createdAt_idx")
+}

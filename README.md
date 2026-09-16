@@ -2,7 +2,7 @@
 
 StockFlow is a multi-role inventory and order management platform for administrators, suppliers, and customers. This repository is being built as a take-home technical assessment using small, reviewable commits.
 
-> Current status: project foundation only. Product features have not been implemented yet.
+> Current status: application shells and the PostgreSQL data model are ready. Product features have not been implemented yet.
 
 ## Planned stack
 
@@ -24,11 +24,22 @@ StockFlow is a multi-role inventory and order management platform for administra
 
 ```bash
 npm install
-copy .env.example .env.local
+copy .env.example .env
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in a browser.
+
+### Database
+
+Set `DATABASE_URL` to the pooled PostgreSQL connection used by the application. Set `DIRECT_URL` to the direct connection used for migrations; the two values may match for a local PostgreSQL server.
+
+```bash
+npm run db:validate
+npm run db:migrate
+```
+
+The database health endpoint is available at `/api/health/database`. It returns `200` when PostgreSQL is reachable and `503` without exposing connection details when it is not.
 
 ## Quality checks
 
@@ -58,7 +69,11 @@ npm run build
 
 ## Assumptions and shortcuts
 
-Implementation assumptions and any deliberate shortcuts will be recorded here as they are approved.
+- Money uses PostgreSQL `DECIMAL(12,2)` values rather than floating-point numbers.
+- Product records are archived and protected from deletion once referenced by an order item.
+- Categories cannot be deleted while active products use them; archived products remain valid if a category is later removed.
+- Order items retain product-name, image, and unit-price snapshots so later catalog changes do not rewrite order history.
+- Database checks enforce non-negative inventory, positive prices and quantities, and consistent supplier approval state. Cross-record role checks remain application responsibilities because they span foreign-key records.
 
 ## Time log
 
