@@ -37,9 +37,12 @@ Set `DATABASE_URL` to the pooled PostgreSQL connection used by the application. 
 ```bash
 npm run db:validate
 npm run db:migrate
+npm run db:seed
 ```
 
 The database health endpoint is available at `/api/health/database`. It returns `200` when PostgreSQL is reachable and `503` without exposing connection details when it is not.
+
+The seed command requires all four `DEMO_*_PASSWORD` values from `.env`. It creates deterministic assessment records and can be run repeatedly without duplicating them. Passwords are never printed or stored in plain text.
 
 ## Quality checks
 
