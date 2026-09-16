@@ -5,7 +5,10 @@ export type ProductField =
   | "categoryId"
   | "price"
   | "stock"
-  | "lowStockThreshold";
+  | "lowStockThreshold"
+  | "imageUrl"
+  | "imagePublicId"
+  | "imageAlt";
 
 export type ProductFormValues = Partial<Record<ProductField, string>>;
 

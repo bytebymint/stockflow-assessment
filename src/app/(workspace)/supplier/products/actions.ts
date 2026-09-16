@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireApprovedSupplier } from "@/lib/auth/session";
+import {
+  CloudinaryConfigurationError,
+  destroyProductImage,
+  verifyProductImage,
+} from "@/lib/cloudinary";
 import { getDatabase } from "@/lib/database";
 import type {
   ProductField,
@@ -22,6 +27,9 @@ function productValues(formData: FormData): ProductFormValues {
     price: String(formData.get("price") ?? ""),
     stock: String(formData.get("stock") ?? ""),
     lowStockThreshold: String(formData.get("lowStockThreshold") ?? ""),
+    imageUrl: String(formData.get("imageUrl") ?? ""),
+    imagePublicId: String(formData.get("imagePublicId") ?? ""),
+    imageAlt: String(formData.get("imageAlt") ?? ""),
   };
 }
 
@@ -54,6 +62,12 @@ function refreshProductViews(productId?: string) {
 
 async function validateProduct(
   values: ProductFormValues,
+  supplierId: string,
+  currentProduct?: {
+    id: string;
+    imagePublicId: string | null;
+    imageUrl: string | null;
+  },
 ): Promise<
   | { success: true; data: ReturnType<typeof productSchema.parse> }
   | { success: false; state: ProductFormState }
@@ -91,7 +105,71 @@ async function validateProduct(
     };
   }
 
-  return { success: true, data: parsedProduct.data };
+  let verifiedImage: {
+    imageAlt: string | null;
+    imagePublicId: string | null;
+    imageUrl: string | null;
+  };
+
+  try {
+    const imageIsUnchanged =
+      currentProduct?.imagePublicId === parsedProduct.data.imagePublicId &&
+      currentProduct?.imageUrl === parsedProduct.data.imageUrl;
+
+    verifiedImage = imageIsUnchanged
+      ? {
+          imageAlt: parsedProduct.data.imageAlt,
+          imagePublicId: currentProduct.imagePublicId,
+          imageUrl: currentProduct.imageUrl,
+        }
+      : await verifyProductImage(supplierId, {
+          imageAlt: parsedProduct.data.imageAlt,
+          imagePublicId: parsedProduct.data.imagePublicId,
+          imageUrl: parsedProduct.data.imageUrl,
+        });
+  } catch (error) {
+    return {
+      success: false,
+      state: {
+        status: "error",
+        message:
+          error instanceof CloudinaryConfigurationError
+            ? "Image uploads are not configured. Add the Cloudinary environment variables and retry."
+            : "The uploaded image could not be verified. Upload it again and retry.",
+        fieldErrors: {
+          imageUrl: ["Upload a valid product image again."],
+        },
+        values,
+      },
+    };
+  }
+
+  if (verifiedImage.imagePublicId) {
+    const imageOwner = await getDatabase().product.findFirst({
+      where: {
+        imagePublicId: verifiedImage.imagePublicId,
+        ...(currentProduct ? { id: { not: currentProduct.id } } : {}),
+      },
+      select: { id: true },
+    });
+
+    if (imageOwner) {
+      return {
+        success: false,
+        state: {
+          status: "error",
+          message: "This image is already assigned to another product.",
+          fieldErrors: { imageUrl: ["Upload a different image."] },
+          values,
+        },
+      };
+    }
+  }
+
+  return {
+    success: true,
+    data: { ...parsedProduct.data, ...verifiedImage },
+  };
 }
 
 export async function createProduct(
@@ -100,7 +178,7 @@ export async function createProduct(
 ): Promise<ProductFormState> {
   const supplier = await requireApprovedSupplier();
   const values = productValues(formData);
-  const validation = await validateProduct(values);
+  const validation = await validateProduct(values, supplier.id);
 
   if (!validation.success) {
     return validation.state;
@@ -147,7 +225,25 @@ export async function updateProduct(
     };
   }
 
-  const validation = await validateProduct(values);
+  const currentProduct = await getDatabase().product.findFirst({
+    where: {
+      id: parsedId.data,
+      supplierId: supplier.id,
+      archivedAt: null,
+    },
+    select: { id: true, imagePublicId: true, imageUrl: true },
+  });
+
+  if (!currentProduct) {
+    return {
+      status: "error",
+      message:
+        "This active product was not found in your inventory. Return to the product list and refresh.",
+      values,
+    };
+  }
+
+  const validation = await validateProduct(values, supplier.id, currentProduct);
 
   if (!validation.success) {
     return validation.state;
@@ -182,6 +278,18 @@ export async function updateProduct(
   }
 
   refreshProductViews(parsedId.data);
+
+  if (
+    currentProduct.imagePublicId &&
+    currentProduct.imagePublicId !== validation.data.imagePublicId
+  ) {
+    try {
+      await destroyProductImage(supplier.id, currentProduct.imagePublicId);
+    } catch (error) {
+      console.error("Unable to remove the replaced Cloudinary image.", error);
+    }
+  }
+
   redirect("/supplier/products?notice=updated");
 }
 

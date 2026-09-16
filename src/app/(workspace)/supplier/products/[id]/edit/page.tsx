@@ -44,6 +44,9 @@ export default async function EditProductPage({
         price: true,
         stock: true,
         lowStockThreshold: true,
+        imageUrl: true,
+        imagePublicId: true,
+        imageAlt: true,
       },
     }),
     getDatabase().category.findMany({
@@ -62,6 +65,9 @@ export default async function EditProductPage({
     price: product.price.toFixed(2),
     stock: String(product.stock),
     lowStockThreshold: String(product.lowStockThreshold),
+    imageUrl: product.imageUrl ?? "",
+    imagePublicId: product.imagePublicId ?? "",
+    imageAlt: product.imageAlt ?? "",
   };
 
   return (

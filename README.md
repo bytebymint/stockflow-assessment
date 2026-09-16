@@ -59,6 +59,14 @@ The deterministic demo emails are:
 
 Their passwords come from the matching `DEMO_*_PASSWORD` environment variables. Protected pages read the current role and supplier status from PostgreSQL rather than trusting session claims alone.
 
+### Product images
+
+Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and the server-only
+`CLOUDINARY_API_SECRET` to enable supplier image uploads. StockFlow authorizes a
+short-lived signed browser upload, validates JPG, PNG, WebP, and AVIF files up to
+5 MB, and verifies the resulting Cloudinary asset before storing its secure URL
+and public ID. The API secret is never sent to the browser.
+
 ## Quality checks
 
 ```bash

@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, LoaderCircle, Save } from "lucide-react";
 
 import {
@@ -17,6 +18,11 @@ import {
 } from "@/app/(workspace)/supplier/products/actions";
 import { FieldError } from "@/components/auth/field-error";
 import { FormAlert } from "@/components/auth/form-alert";
+import {
+  deleteTemporaryProductUpload,
+  ProductImageUploader,
+  type TemporaryProductUpload,
+} from "@/components/supplier/product-image-uploader";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -53,6 +59,9 @@ const emptyValues: ProductFormInitialValues = {
   price: "",
   stock: "0",
   lowStockThreshold: "5",
+  imageUrl: "",
+  imagePublicId: "",
+  imageAlt: "",
 };
 
 function slugify(value: string) {
@@ -69,6 +78,7 @@ export function ProductForm({
   initialValues,
   productId,
 }: ProductFormProps) {
+  const router = useRouter();
   const startingValues = useMemo(
     () => initialValues ?? emptyValues,
     [initialValues],
@@ -81,7 +91,10 @@ export function ProductForm({
   const [values, setValues] = useState(startingValues);
   const [slugWasEdited, setSlugWasEdited] = useState(Boolean(productId));
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [isDiscarding, setIsDiscarding] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const isSubmittingRef = useRef(false);
+  const temporaryUploadRef = useRef<TemporaryProductUpload | null>(null);
   const formId = useId();
   const nameRef = useRef<HTMLInputElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
@@ -90,6 +103,8 @@ export function ProductForm({
   const priceRef = useRef<HTMLInputElement>(null);
   const stockRef = useRef<HTMLInputElement>(null);
   const thresholdRef = useRef<HTMLInputElement>(null);
+  const imageUploadButtonRef = useRef<HTMLButtonElement>(null);
+  const imageAltRef = useRef<HTMLInputElement>(null);
   const isDirty = Object.entries(values).some(
     ([field, value]) =>
       value !== startingValues[field as keyof ProductFormInitialValues],
@@ -123,6 +138,8 @@ export function ProductForm({
       "price",
       "stock",
       "lowStockThreshold",
+      "imageUrl",
+      "imageAlt",
     ];
     const firstInvalidField = fields.find(
       (field) => state.fieldErrors?.[field]?.length,
@@ -149,6 +166,13 @@ export function ProductForm({
         break;
       case "lowStockThreshold":
         thresholdRef.current?.focus();
+        break;
+      case "imageUrl":
+      case "imagePublicId":
+        imageUploadButtonRef.current?.focus();
+        break;
+      case "imageAlt":
+        imageAltRef.current?.focus();
     }
   }, [state]);
 
@@ -162,11 +186,36 @@ export function ProductForm({
       : undefined;
   }
 
+  function updateImage(image: { alt: string; publicId: string; url: string }) {
+    setValues((current) => ({
+      ...current,
+      imageAlt: image.alt,
+      imagePublicId: image.publicId,
+      imageUrl: image.url,
+    }));
+  }
+
+  async function discardChanges() {
+    setIsDiscarding(true);
+
+    if (temporaryUploadRef.current) {
+      try {
+        await deleteTemporaryProductUpload(temporaryUploadRef.current);
+      } catch {
+        // Leaving the form must remain possible if temporary remote cleanup
+        // cannot complete because the browser is offline.
+      }
+    }
+
+    temporaryUploadRef.current = null;
+    router.push("/supplier/products");
+  }
+
   const cancelControl = isDirty ? (
     <Button
       type="button"
       variant="outline"
-      disabled={isPending}
+      disabled={isPending || isImageUploading}
       onClick={() => setDiscardOpen(true)}
     >
       Cancel
@@ -186,7 +235,11 @@ export function ProductForm({
         action={formAction}
         noValidate
         className="space-y-6"
-        onSubmit={() => {
+        onSubmit={(event) => {
+          if (isImageUploading) {
+            event.preventDefault();
+            return;
+          }
           isSubmittingRef.current = true;
         }}
       >
@@ -325,6 +378,37 @@ export function ProductForm({
 
         <Card>
           <CardHeader className="border-b">
+            <CardTitle>Product image</CardTitle>
+            <p className="text-muted-foreground text-sm leading-6">
+              Upload one clear product photo and describe it for accessible
+              catalog browsing. The existing image remains live until you save a
+              replacement.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ProductImageUploader
+              value={{
+                alt: values.imageAlt,
+                publicId: values.imagePublicId,
+                url: values.imageUrl,
+              }}
+              productName={values.name}
+              disabled={isPending}
+              imageMessages={state.fieldErrors?.imageUrl}
+              altMessages={state.fieldErrors?.imageAlt}
+              uploadButtonRef={imageUploadButtonRef}
+              altInputRef={imageAltRef}
+              onChange={updateImage}
+              onUploadingChange={setIsImageUploading}
+              onTemporaryUploadChange={(upload) => {
+                temporaryUploadRef.current = upload;
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b">
             <CardTitle>Pricing and inventory</CardTitle>
             <p className="text-muted-foreground text-sm leading-6">
               Stock must be a whole number. The warning threshold controls when
@@ -415,11 +499,14 @@ export function ProductForm({
 
         <div className="border-border bg-background/95 sticky bottom-[4.5rem] z-20 -mx-4 flex flex-col-reverse gap-2 border-t px-4 py-4 backdrop-blur sm:static sm:mx-0 sm:flex-row sm:justify-end sm:rounded-xl sm:border sm:p-4 lg:bottom-0">
           {cancelControl}
-          <Button type="submit" disabled={isPending || categories.length === 0}>
-            {isPending ? (
+          <Button
+            type="submit"
+            disabled={isPending || isImageUploading || categories.length === 0}
+          >
+            {isPending || isImageUploading ? (
               <>
                 <LoaderCircle className="animate-spin" aria-hidden="true" />
-                Saving…
+                {isImageUploading ? "Uploading image…" : "Saving…"}
               </>
             ) : (
               <>
@@ -443,13 +530,19 @@ export function ProductForm({
             <DialogClose render={<Button variant="outline" />}>
               Keep editing
             </DialogClose>
-            <Link
-              href="/supplier/products"
-              className={buttonVariants({ variant: "destructive" })}
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDiscarding}
+              onClick={discardChanges}
             >
-              <ArrowLeft data-icon="inline-start" aria-hidden="true" />
-              Discard changes
-            </Link>
+              {isDiscarding ? (
+                <LoaderCircle className="animate-spin" aria-hidden="true" />
+              ) : (
+                <ArrowLeft data-icon="inline-start" aria-hidden="true" />
+              )}
+              {isDiscarding ? "Discarding…" : "Discard changes"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
