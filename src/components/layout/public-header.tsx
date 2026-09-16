@@ -16,9 +16,10 @@ import { cn } from "@/lib/utils";
 import { getWorkspacePath } from "@/lib/auth/paths";
 
 const navigation = [
-  { label: "Platform", href: "#platform" },
-  { label: "How it works", href: "#workflow" },
-  { label: "For every role", href: "#roles" },
+  { label: "Catalog", href: "/products" },
+  { label: "Platform", href: "/#platform" },
+  { label: "How it works", href: "/#workflow" },
+  { label: "For every role", href: "/#roles" },
 ];
 
 export async function PublicHeader() {
@@ -33,7 +34,7 @@ export async function PublicHeader() {
         <StockFlowLogo className="shrink-0" />
 
         <nav
-          className="hidden items-center gap-1 md:flex"
+          className="hidden items-center gap-1 lg:flex"
           aria-label="Primary navigation"
         >
           {navigation.map((item) => (
@@ -47,7 +48,7 @@ export async function PublicHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           {workspacePath ? (
             <Link
               href={workspacePath}
@@ -87,7 +88,7 @@ export async function PublicHeader() {
               <Button
                 variant="outline"
                 size="icon"
-                className="shrink-0 md:hidden"
+                className="shrink-0 lg:hidden"
                 aria-label="Open navigation"
               />
             }

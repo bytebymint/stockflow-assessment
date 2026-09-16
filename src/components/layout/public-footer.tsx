@@ -15,13 +15,19 @@ export function PublicFooter() {
         <div className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium">
           <Link
             className="hover:text-foreground inline-flex min-h-11 items-center"
-            href="#platform"
+            href="/products"
+          >
+            Catalog
+          </Link>
+          <Link
+            className="hover:text-foreground inline-flex min-h-11 items-center"
+            href="/#platform"
           >
             Platform
           </Link>
           <Link
             className="hover:text-foreground inline-flex min-h-11 items-center"
-            href="#workflow"
+            href="/#workflow"
           >
             Workflow
           </Link>
