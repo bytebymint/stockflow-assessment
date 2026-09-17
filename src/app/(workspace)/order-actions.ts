@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { Prisma } from "@/generated/prisma/client";
+import { NotificationType, Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDatabase } from "@/lib/database";
 import {
@@ -59,6 +59,42 @@ function transitionTimestamp(
   }
 }
 
+function customerNotificationContent(
+  targetStatus: OrderStatusValue,
+  orderNumber: string,
+  supplierName: string,
+) {
+  switch (targetStatus) {
+    case "CONFIRMED":
+      return {
+        type: NotificationType.ORDER_STATUS_CHANGED,
+        title: `Order ${orderNumber} confirmed`,
+        message: `${supplierName} confirmed your order and is preparing it for dispatch.`,
+      };
+    case "SHIPPED":
+      return {
+        type: NotificationType.ORDER_STATUS_CHANGED,
+        title: `Order ${orderNumber} shipped`,
+        message: `${supplierName} marked your order as shipped.`,
+      };
+    case "DELIVERED":
+      return {
+        type: NotificationType.ORDER_STATUS_CHANGED,
+        title: `Order ${orderNumber} delivered`,
+        message: `Your order from ${supplierName} was marked as delivered.`,
+      };
+    case "CANCELLED":
+      return {
+        type: NotificationType.ORDER_CANCELLED,
+        title: `Order ${orderNumber} cancelled`,
+        message:
+          "This order was cancelled and its reserved inventory was returned to stock.",
+      };
+    default:
+      return null;
+  }
+}
+
 function revalidateOrderViews(orderId: string) {
   revalidatePath("/orders");
   revalidatePath(`/orders/${orderId}`);
@@ -66,6 +102,7 @@ function revalidateOrderViews(orderId: string) {
   revalidatePath(`/supplier/orders/${orderId}`);
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/notifications");
   revalidatePath("/account");
   revalidatePath("/supplier");
   revalidatePath("/admin");
@@ -109,9 +146,11 @@ export async function transitionOrder(
             where: { id: orderId },
             select: {
               status: true,
+              orderNumber: true,
               customerId: true,
               supplierId: true,
               stockRestoredAt: true,
+              supplier: { select: { name: true } },
               items: { select: { productId: true, quantity: true } },
             },
           });
@@ -148,6 +187,24 @@ export async function transitionOrder(
                 data: { stock: { increment: item.quantity } },
               });
             }
+          }
+
+          const notification = customerNotificationContent(
+            targetStatus,
+            order.orderNumber,
+            order.supplier.name,
+          );
+
+          if (notification) {
+            await transaction.notification.create({
+              data: {
+                userId: order.customerId,
+                type: notification.type,
+                title: notification.title,
+                message: notification.message,
+                href: `/orders/${orderId}`,
+              },
+            });
           }
 
           return "updated" as const;

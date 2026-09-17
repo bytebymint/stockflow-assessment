@@ -34,6 +34,7 @@ function refreshSupplierViews() {
   revalidatePath("/admin/suppliers");
   revalidatePath("/supplier");
   revalidatePath("/supplier/status");
+  revalidatePath("/notifications");
   revalidatePath("/products");
   revalidatePath("/");
 }

@@ -1,8 +1,17 @@
 import type { ReactNode } from "react";
-import { ClipboardList, LayoutDashboard, PackageSearch } from "lucide-react";
+import {
+  Bell,
+  ClipboardList,
+  LayoutDashboard,
+  PackageSearch,
+} from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import type { CurrentUser } from "@/lib/auth/session";
+import {
+  getUnreadNotificationCount,
+  notificationBadge,
+} from "@/lib/notifications/data";
 
 const supplierNavigation = [
   { label: "Overview", href: "/supplier", icon: LayoutDashboard },
@@ -11,19 +20,36 @@ const supplierNavigation = [
 ];
 
 type SupplierShellProps = {
-  activeHref: "/supplier" | "/supplier/products" | "/supplier/orders";
+  activeHref:
+    "/supplier" | "/supplier/products" | "/supplier/orders" | "/notifications";
   children: ReactNode;
+  unreadCount?: number;
   user: CurrentUser;
 };
 
-export function SupplierShell({
+export async function SupplierShell({
   activeHref,
   children,
+  unreadCount,
   user,
 }: SupplierShellProps) {
+  const resolvedUnreadCount =
+    unreadCount ?? (await getUnreadNotificationCount(user.id));
+  const badge = notificationBadge(resolvedUnreadCount);
+  const navigation = [
+    ...supplierNavigation,
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: Bell,
+      badge,
+      badgeLabel: badge ? `${resolvedUnreadCount} unread` : undefined,
+    },
+  ];
+
   return (
     <AppShell
-      navigation={supplierNavigation}
+      navigation={navigation}
       activeHref={activeHref}
       roleLabel="Supplier"
       userName={user.name}

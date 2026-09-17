@@ -586,7 +586,7 @@ async function main() {
       type: NotificationType.LOW_STOCK,
       title: "Low stock needs attention",
       message: "Cut-Resistant Work Gloves have fallen below the stock target.",
-      href: `/supplier/products/${ids.products.gloves}`,
+      href: `/supplier/products/${ids.products.gloves}/edit`,
       readAt: null,
       createdAt: at("2026-09-13T15:31:00.000Z"),
     },

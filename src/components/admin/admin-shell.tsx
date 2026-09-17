@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  Bell,
   ClipboardList,
   LayoutDashboard,
   Tags,
@@ -8,6 +9,10 @@ import {
 
 import { AppShell } from "@/components/layout/app-shell";
 import type { CurrentUser } from "@/lib/auth/session";
+import {
+  getUnreadNotificationCount,
+  notificationBadge,
+} from "@/lib/notifications/data";
 
 const adminNavigation = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
@@ -22,15 +27,39 @@ const adminNavigation = [
 
 type AdminShellProps = {
   activeHref:
-    "/admin" | "/admin/categories" | "/admin/suppliers" | "/admin/orders";
+    | "/admin"
+    | "/admin/categories"
+    | "/admin/suppliers"
+    | "/admin/orders"
+    | "/notifications";
   children: ReactNode;
+  unreadCount?: number;
   user: CurrentUser;
 };
 
-export function AdminShell({ activeHref, children, user }: AdminShellProps) {
+export async function AdminShell({
+  activeHref,
+  children,
+  unreadCount,
+  user,
+}: AdminShellProps) {
+  const resolvedUnreadCount =
+    unreadCount ?? (await getUnreadNotificationCount(user.id));
+  const badge = notificationBadge(resolvedUnreadCount);
+  const navigation = [
+    ...adminNavigation,
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: Bell,
+      badge,
+      badgeLabel: badge ? `${resolvedUnreadCount} unread` : undefined,
+    },
+  ];
+
   return (
     <AppShell
-      navigation={adminNavigation}
+      navigation={navigation}
       activeHref={activeHref}
       roleLabel="Administrator"
       userName={user.name}

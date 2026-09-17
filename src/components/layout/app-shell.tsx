@@ -12,6 +12,7 @@ export type AppNavigationItem = {
   href: string;
   icon: LucideIcon;
   badge?: string;
+  badgeLabel?: string;
 };
 
 type AppShellProps = {
@@ -59,6 +60,11 @@ export function AppShell({
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
+                aria-label={
+                  item.badgeLabel
+                    ? `${item.label}, ${item.badgeLabel}`
+                    : undefined
+                }
                 className={cn(
                   "focus-visible:ring-sidebar-ring/50 flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-200 focus-visible:ring-3 focus-visible:outline-none",
                   isActive
@@ -69,7 +75,10 @@ export function AppShell({
                 <Icon className="size-5" aria-hidden="true" />
                 <span>{item.label}</span>
                 {item.badge ? (
-                  <span className="bg-sidebar-primary text-sidebar-primary-foreground ml-auto rounded-full px-2 py-0.5 text-xs font-bold">
+                  <span
+                    className="bg-sidebar-primary text-sidebar-primary-foreground ml-auto rounded-full px-2 py-0.5 text-xs font-bold"
+                    aria-hidden="true"
+                  >
                     {item.badge}
                   </span>
                 ) : null}
@@ -143,6 +152,11 @@ export function AppShell({
               key={item.href}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
+              aria-label={
+                item.badgeLabel
+                  ? `${item.label}, ${item.badgeLabel}`
+                  : undefined
+              }
               className={cn(
                 "focus-visible:ring-ring/30 relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[0.68rem] font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none sm:text-xs",
                 isActive
@@ -153,7 +167,10 @@ export function AppShell({
               <Icon className="size-5" aria-hidden="true" />
               <span className="max-w-full truncate">{item.label}</span>
               {item.badge ? (
-                <span className="bg-primary text-primary-foreground absolute top-1.5 left-[calc(50%+0.4rem)] min-w-4 rounded-full px-1 text-center text-[0.625rem] leading-4">
+                <span
+                  className="bg-primary text-primary-foreground absolute top-1.5 left-[calc(50%+0.4rem)] min-w-4 rounded-full px-1 text-center text-[0.625rem] leading-4"
+                  aria-hidden="true"
+                >
                   {item.badge}
                 </span>
               ) : null}

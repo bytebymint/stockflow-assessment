@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { BellRing, CircleAlert, Clock3, ShieldCheck } from "lucide-react";
+import { Bell, BellRing, CircleAlert, Clock3, ShieldCheck } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +8,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireRole } from "@/lib/auth/session";
 import { getDatabase } from "@/lib/database";
+import {
+  getUnreadNotificationCount,
+  notificationBadge,
+} from "@/lib/notifications/data";
 
 export const metadata: Metadata = { title: "Supplier account status" };
 
@@ -19,19 +23,30 @@ export default async function SupplierStatusPage() {
   }
 
   const isRejected = user.supplierStatus === "REJECTED";
-  const latestStatusUpdate = await getDatabase().notification.findFirst({
-    where: {
-      userId: user.id,
-      type: "SUPPLIER_STATUS_CHANGED",
-    },
-    select: {
-      message: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const [latestStatusUpdate, unreadCount] = await Promise.all([
+    getDatabase().notification.findFirst({
+      where: {
+        userId: user.id,
+        type: "SUPPLIER_STATUS_CHANGED",
+      },
+      select: {
+        message: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    getUnreadNotificationCount(user.id),
+  ]);
+  const badge = notificationBadge(unreadCount);
   const navigation = [
     { label: "Account status", href: "/supplier/status", icon: Clock3 },
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: Bell,
+      badge,
+      badgeLabel: badge ? `${unreadCount} unread` : undefined,
+    },
   ];
 
   return (

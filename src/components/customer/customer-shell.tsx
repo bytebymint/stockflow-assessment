@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
-import { ClipboardList, UserRound } from "lucide-react";
+import { Bell, ClipboardList, UserRound } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import type { CurrentUser } from "@/lib/auth/session";
+import {
+  getUnreadNotificationCount,
+  notificationBadge,
+} from "@/lib/notifications/data";
 
 const customerNavigation = [
   { label: "Account", href: "/account", icon: UserRound },
@@ -10,19 +14,35 @@ const customerNavigation = [
 ];
 
 type CustomerShellProps = {
-  activeHref: "/account" | "/orders";
+  activeHref: "/account" | "/orders" | "/notifications";
   children: ReactNode;
+  unreadCount?: number;
   user: CurrentUser;
 };
 
-export function CustomerShell({
+export async function CustomerShell({
   activeHref,
   children,
+  unreadCount,
   user,
 }: CustomerShellProps) {
+  const resolvedUnreadCount =
+    unreadCount ?? (await getUnreadNotificationCount(user.id));
+  const badge = notificationBadge(resolvedUnreadCount);
+  const navigation = [
+    ...customerNavigation,
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: Bell,
+      badge,
+      badgeLabel: badge ? `${resolvedUnreadCount} unread` : undefined,
+    },
+  ];
+
   return (
     <AppShell
-      navigation={customerNavigation}
+      navigation={navigation}
       activeHref={activeHref}
       roleLabel="Customer"
       userName={user.name}

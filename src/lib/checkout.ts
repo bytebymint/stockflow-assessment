@@ -296,7 +296,7 @@ export async function createCheckout(
               new Prisma.Decimal(0),
             );
 
-            await transaction.order.create({
+            const createdOrder = await transaction.order.create({
               data: {
                 orderNumber: orderNumber(reference, index),
                 checkoutGroupId: createdCheckout.id,
@@ -313,6 +313,21 @@ export async function createCheckout(
                     lineTotal: product.price.mul(requestItem.quantity),
                   })),
                 },
+              },
+              select: { id: true, orderNumber: true },
+            });
+            const unitCount = items.reduce(
+              (total, item) => total + item.requestItem.quantity,
+              0,
+            );
+
+            await transaction.notification.create({
+              data: {
+                userId: supplierId,
+                type: NotificationType.ORDER_CREATED,
+                title: `New order ${createdOrder.orderNumber}`,
+                message: `${unitCount} ${unitCount === 1 ? "unit is" : "units are"} waiting for confirmation, totalling £${subtotal.toFixed(2)}.`,
+                href: `/supplier/orders/${createdOrder.id}`,
               },
             });
           }

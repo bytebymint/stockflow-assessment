@@ -17,6 +17,7 @@ export const proxy = auth((request) => {
     isAdminRoute ||
     isSupplierRoute ||
     isCustomerRoute ||
+    pathname === "/notifications" ||
     pathname === "/ui-preview";
 
   if (!user && (isProtectedRoute || pathname === "/auth/continue")) {
@@ -44,6 +45,7 @@ export const config = {
     "/supplier/:path*",
     "/account/:path*",
     "/orders/:path*",
+    "/notifications",
     "/sign-in",
     "/register",
     "/auth/continue",
