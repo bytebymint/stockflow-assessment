@@ -37,7 +37,12 @@ async function createOrderFromSingleSearchResult(page: Page, query: string) {
 async function openOrder(page: Page, listPath: string, orderNumber?: string) {
   await page.goto(listPath);
   const orderCard = orderNumber
-    ? page.locator("article").filter({ hasText: orderNumber })
+    ? page
+        .locator("article")
+        .filter({
+          has: page.getByRole("heading", { name: orderNumber, exact: true }),
+        })
+        .first()
     : page.locator("article").first();
   await expect(orderCard).toBeVisible();
   await orderCard.getByRole("link", { name: "View order" }).click();

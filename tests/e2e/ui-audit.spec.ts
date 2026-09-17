@@ -186,7 +186,12 @@ test("catalog touch targets, long text, and enlarged text remain usable", async 
     document.documentElement.style.fontSize = "200%";
   });
   await expect(
-    page.getByText("No products match these filters", { exact: true }),
+    page
+      .getByRole("heading", {
+        name: "No products match these filters",
+        exact: true,
+      })
+      .first(),
   ).toBeVisible();
 
   const layout = await page.evaluate(() => {
