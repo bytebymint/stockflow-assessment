@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
-import { LayoutDashboard, Tags, UserRoundCheck } from "lucide-react";
+import {
+  ClipboardList,
+  LayoutDashboard,
+  Tags,
+  UserRoundCheck,
+} from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import type { CurrentUser } from "@/lib/auth/session";
@@ -12,10 +17,12 @@ const adminNavigation = [
     href: "/admin/suppliers",
     icon: UserRoundCheck,
   },
+  { label: "Orders", href: "/admin/orders", icon: ClipboardList },
 ];
 
 type AdminShellProps = {
-  activeHref: "/admin" | "/admin/categories" | "/admin/suppliers";
+  activeHref:
+    "/admin" | "/admin/categories" | "/admin/suppliers" | "/admin/orders";
   children: ReactNode;
   user: CurrentUser;
 };

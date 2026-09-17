@@ -18,7 +18,7 @@ export default async function SupplierPage() {
         title={`Welcome, ${user.name}`}
         description="Your approved supplier session is active. Pending and rejected supplier accounts cannot enter this workspace."
         icon={Store}
-        nextStep="Use Products to maintain listings, pricing, and stock levels. Order fulfilment tools will be added separately."
+        nextStep="Use Products to maintain inventory and Orders to manage fulfilment through delivery."
       />
     </SupplierShell>
   );

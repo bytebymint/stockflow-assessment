@@ -18,7 +18,7 @@ export default async function AdminPage() {
         title={`Welcome, ${user.name}`}
         description="Your administrator session is active and isolated from customer and supplier workspaces."
         icon={ShieldCheck}
-        nextStep="Category controls and supplier approval reviews are available from the administrator navigation."
+        nextStep="Category controls, supplier approvals, and platform-wide order management are available from the navigation."
       />
     </AdminShell>
   );

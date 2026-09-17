@@ -13,6 +13,7 @@ type ProductMediaProps = {
   categoryName?: string;
   className?: string;
   sizes?: string;
+  compact?: boolean;
 };
 
 export function ProductMedia({
@@ -22,6 +23,7 @@ export function ProductMedia({
   categoryName,
   className,
   sizes = "(min-width: 1280px) 280px, (min-width: 768px) 33vw, 100vw",
+  compact = false,
 }: ProductMediaProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(imageUrl) && !imageFailed;
@@ -60,14 +62,18 @@ export function ProductMedia({
               <PackageOpen className="size-6" aria-hidden="true" />
             )}
           </span>
-          <span className="text-foreground mt-3 text-sm font-semibold">
-            {productName}
-          </span>
-          <span className="text-muted-foreground mt-1 text-xs">
-            {imageFailed
-              ? "Image unavailable"
-              : categoryName || "Product image coming soon"}
-          </span>
+          {!compact ? (
+            <>
+              <span className="text-foreground mt-3 text-sm font-semibold">
+                {productName}
+              </span>
+              <span className="text-muted-foreground mt-1 text-xs">
+                {imageFailed
+                  ? "Image unavailable"
+                  : categoryName || "Product image coming soon"}
+              </span>
+            </>
+          ) : null}
         </div>
       )}
     </div>

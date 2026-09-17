@@ -144,13 +144,13 @@ export default async function CheckoutSuccessPage({
               Continue shopping
             </Link>
             <Link
-              href="/account"
+              href="/orders"
               className={cn(
                 buttonVariants({ variant: "outline" }),
                 "sm:w-auto",
               )}
             >
-              Open customer account
+              View your orders
             </Link>
           </div>
         </div>

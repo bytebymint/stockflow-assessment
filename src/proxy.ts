@@ -9,7 +9,10 @@ export const proxy = auth((request) => {
   const isSupplierRoute =
     pathname === "/supplier" || pathname.startsWith("/supplier/");
   const isCustomerRoute =
-    pathname === "/account" || pathname.startsWith("/account/");
+    pathname === "/account" ||
+    pathname.startsWith("/account/") ||
+    pathname === "/orders" ||
+    pathname.startsWith("/orders/");
   const isProtectedRoute =
     isAdminRoute ||
     isSupplierRoute ||
@@ -40,6 +43,7 @@ export const config = {
     "/admin/:path*",
     "/supplier/:path*",
     "/account/:path*",
+    "/orders/:path*",
     "/sign-in",
     "/register",
     "/auth/continue",
