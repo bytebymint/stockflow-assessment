@@ -73,8 +73,24 @@ and public ID. The API secret is never sent to the browser.
 npm run lint
 npm run typecheck
 npm run format:check
+npm test
 npm run build
 ```
+
+### Database integration tests
+
+Set `TEST_DATABASE_URL` to a dedicated disposable PostgreSQL database. The test
+runner applies committed migrations, clears test records between cases, and
+refuses to run when the test URL targets the same host and database name as
+`DATABASE_URL`.
+
+```bash
+npm run test:integration
+```
+
+These tests cover atomic multi-supplier checkout, insufficient-stock rollback,
+simultaneous checkout attempts, non-negative stock constraints, and idempotent
+stock restoration after cancellation.
 
 ## Assessment requirement tracker
 

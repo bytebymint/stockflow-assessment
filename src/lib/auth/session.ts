@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import type { SupplierStatus, UserRole } from "@/generated/prisma/client";
+import { isApprovedSupplier } from "@/lib/auth/policy";
 import { getWorkspacePath } from "@/lib/auth/paths";
 import { getDatabase } from "@/lib/database";
 
@@ -58,7 +59,7 @@ export async function requireRole(role: UserRole) {
 export async function requireApprovedSupplier() {
   const user = await requireRole("SUPPLIER");
 
-  if (user.supplierStatus !== "APPROVED") {
+  if (!isApprovedSupplier(user)) {
     redirect("/supplier/status");
   }
 
