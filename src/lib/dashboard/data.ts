@@ -130,7 +130,7 @@ export async function getAdminDashboardData(range: DashboardRange) {
 
   const [
     activeProductCount,
-    approvedSupplierCount,
+    approvedSuppliers,
     orders,
     deliveredOrders,
     products,
@@ -138,11 +138,13 @@ export async function getAdminDashboardData(range: DashboardRange) {
     pendingSuppliers,
   ] = await Promise.all([
     database.product.count({ where: { archivedAt: null } }),
-    database.user.count({
+    database.user.findMany({
       where: {
         role: UserRole.SUPPLIER,
         supplierStatus: SupplierStatus.APPROVED,
       },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
     }),
     database.order.findMany({
       where: { createdAt: { gte: start, lt: end } },
@@ -238,7 +240,7 @@ export async function getAdminDashboardData(range: DashboardRange) {
     rangeEndLabel: fullDateLabel(new Date(end.getTime() - 1)),
     metrics: {
       activeProducts: activeProductCount,
-      approvedSuppliers: approvedSupplierCount,
+      approvedSuppliers: approvedSuppliers.length,
       orders: orders.length,
       deliveredRevenue: deliveredRevenue.toFixed(2),
     },
@@ -263,6 +265,7 @@ export async function getAdminDashboardData(range: DashboardRange) {
         threshold: product.lowStockThreshold,
       })),
     pendingSupplierCount,
+    exportSuppliers: approvedSuppliers,
     pendingSuppliers: pendingSuppliers.map((supplier) => ({
       ...supplier,
       createdAtLabel: fullDateLabel(supplier.createdAt),

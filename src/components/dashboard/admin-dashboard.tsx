@@ -16,6 +16,7 @@ import {
   RevenueBySupplierChart,
 } from "@/components/dashboard/dashboard-charts";
 import { DashboardRangeFilter } from "@/components/dashboard/dashboard-range-filter";
+import { ExportReports } from "@/components/dashboard/export-reports";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -215,6 +216,12 @@ export function AdminDashboard({
           </CardContent>
         </Card>
       </div>
+
+      <ExportReports
+        activeRange={data.range}
+        role="ADMIN"
+        suppliers={data.exportSuppliers}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { DashboardRangeFilter } from "@/components/dashboard/dashboard-range-filter";
+import { ExportReports } from "@/components/dashboard/export-reports";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -186,6 +187,8 @@ export function SupplierDashboard({
           </CardContent>
         </Card>
       </div>
+
+      <ExportReports activeRange={data.range} role="SUPPLIER" />
     </div>
   );
 }
