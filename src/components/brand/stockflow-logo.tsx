@@ -26,7 +26,7 @@ export function StockFlowLogo({
     >
       <span
         className={cn(
-          "flex size-9 items-center justify-center rounded-lg",
+          "flex size-9 shrink-0 items-center justify-center rounded-lg",
           inverse
             ? "bg-sidebar-primary text-sidebar-primary-foreground"
             : "bg-primary text-primary-foreground",
@@ -35,7 +35,7 @@ export function StockFlowLogo({
       >
         <Boxes className="size-5" strokeWidth={2} />
       </span>
-      <span>StockFlow</span>
+      <span className="min-w-0 truncate">StockFlow</span>
     </Link>
   );
 }

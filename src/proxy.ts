@@ -17,8 +17,7 @@ export const proxy = auth((request) => {
     isAdminRoute ||
     isSupplierRoute ||
     isCustomerRoute ||
-    pathname === "/notifications" ||
-    pathname === "/ui-preview";
+    pathname === "/notifications";
 
   if (!user && (isProtectedRoute || pathname === "/auth/continue")) {
     const signInUrl = request.nextUrl.clone();
@@ -49,6 +48,5 @@ export const config = {
     "/sign-in",
     "/register",
     "/auth/continue",
-    "/ui-preview",
   ],
 };

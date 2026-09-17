@@ -32,7 +32,7 @@ export async function PublicHeader() {
   return (
     <header className="border-border/70 bg-background/90 sticky top-0 z-40 border-b backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-7xl min-w-0 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-        <StockFlowLogo className="shrink-0" />
+        <StockFlowLogo className="min-w-0" />
 
         <nav
           className="hidden items-center gap-1 lg:flex"

@@ -391,7 +391,7 @@ export function ActiveCatalogFilters({ options, query }: DiscoveryProps) {
         <Link
           key={filter.field}
           href={catalogHref(query, { [filter.field]: "", page: 1 })}
-          className="border-border bg-background hover:border-primary/40 hover:text-primary focus-visible:ring-ring/30 inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none"
+          className="border-border bg-background hover:border-primary/40 hover:text-primary focus-visible:ring-ring/30 inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none"
           aria-label={`Remove filter: ${filter.label}`}
         >
           {filter.label}
@@ -400,7 +400,7 @@ export function ActiveCatalogFilters({ options, query }: DiscoveryProps) {
       ))}
       <Link
         href="/products"
-        className="text-primary hover:text-primary/80 focus-visible:ring-ring/30 ml-auto inline-flex min-h-9 items-center rounded-md px-2 text-xs font-semibold focus-visible:ring-3 focus-visible:outline-none"
+        className="text-primary hover:text-primary/80 focus-visible:ring-ring/30 ml-auto inline-flex min-h-11 items-center rounded-md px-2 text-xs font-semibold focus-visible:ring-3 focus-visible:outline-none"
       >
         Clear all
       </Link>

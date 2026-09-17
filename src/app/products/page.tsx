@@ -161,7 +161,10 @@ export default async function ProductsPage({
                 action={
                   <Link
                     href="/products"
-                    className={cn(buttonVariants({ variant: "outline" }))}
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "h-auto max-w-full py-2 text-center whitespace-normal",
+                    )}
                   >
                     <RotateCcw data-icon="inline-start" aria-hidden="true" />
                     Clear search and filters
