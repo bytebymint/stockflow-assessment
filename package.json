@@ -15,6 +15,8 @@
     "test:watch": "vitest --config vitest.config.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:all": "npm run test && npm run test:integration",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:report": "playwright show-report",
     "postinstall": "prisma generate",
     "db:validate": "prisma validate",
     "db:generate": "prisma generate",
@@ -46,6 +48,8 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
