@@ -1,25 +1,47 @@
 import type { Metadata } from "next";
-import { ShieldCheck } from "lucide-react";
+import { Suspense } from "react";
 
 import { AdminShell } from "@/components/admin/admin-shell";
-import { WorkspaceEntry } from "@/components/auth/workspace-entry";
+import { AdminDashboard } from "@/components/dashboard/admin-dashboard";
+import { DashboardErrorState } from "@/components/dashboard/dashboard-feedback";
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { requireRole } from "@/lib/auth/session";
+import { getAdminDashboardData } from "@/lib/dashboard/data";
+import { parseDashboardRange } from "@/lib/dashboard/range";
 
-export const metadata: Metadata = { title: "Admin workspace" };
+export const metadata: Metadata = { title: "Admin dashboard" };
 
-export default async function AdminPage() {
+type AdminPageProps = {
+  searchParams: Promise<{ range?: string | string[] }>;
+};
+
+async function AdminDashboardContent({
+  adminName,
+  range,
+}: {
+  adminName: string;
+  range: ReturnType<typeof parseDashboardRange>;
+}) {
+  let data;
+
+  try {
+    data = await getAdminDashboardData(range);
+  } catch {
+    return <DashboardErrorState workspace="Administrator" />;
+  }
+
+  return <AdminDashboard adminName={adminName} data={data} />;
+}
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   const user = await requireRole("ADMIN");
+  const range = parseDashboardRange((await searchParams).range);
 
   return (
     <AdminShell activeHref="/admin" user={user}>
-      <WorkspaceEntry
-        user={user}
-        eyebrow="Administrator access"
-        title={`Welcome, ${user.name}`}
-        description="Your administrator session is active and isolated from customer and supplier workspaces."
-        icon={ShieldCheck}
-        nextStep="Category controls, supplier approvals, and platform-wide order management are available from the navigation."
-      />
+      <Suspense key={range} fallback={<DashboardSkeleton chartCount={2} />}>
+        <AdminDashboardContent adminName={user.name} range={range} />
+      </Suspense>
     </AdminShell>
   );
 }

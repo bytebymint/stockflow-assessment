@@ -1,25 +1,55 @@
 import type { Metadata } from "next";
-import { Store } from "lucide-react";
+import { Suspense } from "react";
 
-import { WorkspaceEntry } from "@/components/auth/workspace-entry";
+import { DashboardErrorState } from "@/components/dashboard/dashboard-feedback";
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
+import { SupplierDashboard } from "@/components/dashboard/supplier-dashboard";
 import { SupplierShell } from "@/components/supplier/supplier-shell";
 import { requireApprovedSupplier } from "@/lib/auth/session";
+import { getSupplierDashboardData } from "@/lib/dashboard/data";
+import { parseDashboardRange } from "@/lib/dashboard/range";
 
-export const metadata: Metadata = { title: "Supplier workspace" };
+export const metadata: Metadata = { title: "Supplier dashboard" };
 
-export default async function SupplierPage() {
+type SupplierPageProps = {
+  searchParams: Promise<{ range?: string | string[] }>;
+};
+
+async function SupplierDashboardContent({
+  range,
+  supplierId,
+  supplierName,
+}: {
+  range: ReturnType<typeof parseDashboardRange>;
+  supplierId: string;
+  supplierName: string;
+}) {
+  let data;
+
+  try {
+    data = await getSupplierDashboardData(supplierId, range);
+  } catch {
+    return <DashboardErrorState workspace="Supplier" />;
+  }
+
+  return <SupplierDashboard data={data} supplierName={supplierName} />;
+}
+
+export default async function SupplierPage({
+  searchParams,
+}: SupplierPageProps) {
   const user = await requireApprovedSupplier();
+  const range = parseDashboardRange((await searchParams).range);
 
   return (
     <SupplierShell activeHref="/supplier" user={user}>
-      <WorkspaceEntry
-        user={user}
-        eyebrow="Approved supplier access"
-        title={`Welcome, ${user.name}`}
-        description="Your approved supplier session is active. Pending and rejected supplier accounts cannot enter this workspace."
-        icon={Store}
-        nextStep="Use Products to maintain inventory and Orders to manage fulfilment through delivery."
-      />
+      <Suspense key={range} fallback={<DashboardSkeleton />}>
+        <SupplierDashboardContent
+          range={range}
+          supplierId={user.id}
+          supplierName={user.name}
+        />
+      </Suspense>
     </SupplierShell>
   );
 }
