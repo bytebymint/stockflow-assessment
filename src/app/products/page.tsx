@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PackageSearch, RotateCcw, ShieldCheck } from "lucide-react";
 
+import { auth } from "@/auth";
 import {
   ActiveCatalogFilters,
   activeFilterCount,
@@ -67,9 +68,10 @@ export default async function ProductsPage({
     redirect(canonicalHref);
   }
 
-  const [catalog, options] = await Promise.all([
+  const [catalog, options, session] = await Promise.all([
     getPublicCatalogPage(query),
     getCatalogFilterOptions(),
+    auth(),
   ]);
   const effectiveQuery = { ...query, page: catalog.currentPage };
 
@@ -144,7 +146,11 @@ export default async function ProductsPage({
             {catalog.products.length > 0 ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {catalog.products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    canAddToCart={session?.user.role === "CUSTOMER"}
+                  />
                 ))}
               </div>
             ) : hasDiscoveryState ? (

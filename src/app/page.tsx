@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { auth } from "@/auth";
 import { ProductCard } from "@/components/catalog/product-card";
 import { StockStatus } from "@/components/catalog/stock-status";
 import { PublicFooter } from "@/components/layout/public-footer";
@@ -67,7 +68,10 @@ const workflow = [
 ];
 
 export default async function Home() {
-  const featuredProducts = await getFeaturedProducts().catch(() => []);
+  const [featuredProducts, session] = await Promise.all([
+    getFeaturedProducts().catch(() => []),
+    auth(),
+  ]);
 
   return (
     <div className="bg-background min-h-dvh overflow-x-hidden">
@@ -241,7 +245,11 @@ export default async function Home() {
             </div>
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  canAddToCart={session?.user.role === "CUSTOMER"}
+                />
               ))}
             </div>
           </section>

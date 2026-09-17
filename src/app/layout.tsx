@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { auth } from "@/auth";
+import { CartProvider } from "@/components/cart/cart-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
@@ -25,9 +27,13 @@ export const metadata: Metadata = {
     "A clear, dependable workspace for inventory, suppliers, and customer orders.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
+  const session = await auth();
+  const cartOwnerId =
+    session?.user.role === "CUSTOMER" ? session.user.id : null;
+
   return (
     <html
       lang="en"
@@ -35,7 +41,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        {children}
+        <CartProvider key={cartOwnerId ?? "guest"} ownerId={cartOwnerId}>
+          {children}
+        </CartProvider>
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>

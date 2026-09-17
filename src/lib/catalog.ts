@@ -137,6 +137,7 @@ export type PublicProduct = {
   imageUrl: string | null;
   imageAlt: string | null;
   supplier: {
+    id: string;
     name: string;
   };
   category: {
@@ -157,6 +158,7 @@ const publicProductSelect = {
   imageAlt: true,
   supplier: {
     select: {
+      id: true,
       name: true,
     },
   },
@@ -186,7 +188,7 @@ function serializeProduct(product: {
   lowStockThreshold: number;
   imageUrl: string | null;
   imageAlt: string | null;
-  supplier: { name: string };
+  supplier: { id: string; name: string };
   category: { name: string; slug: string } | null;
 }): PublicProduct {
   return {

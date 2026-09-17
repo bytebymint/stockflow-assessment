@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Building2, Layers3 } from "lucide-react";
 
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { ProductMedia } from "@/components/catalog/product-media";
 import { StockStatus } from "@/components/catalog/stock-status";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +19,13 @@ import { cn } from "@/lib/utils";
 
 type ProductCardProps = {
   product: PublicProduct;
+  canAddToCart?: boolean;
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({
+  product,
+  canAddToCart = false,
+}: ProductCardProps) {
   const detailHref = `/products/${product.id}`;
 
   return (
@@ -74,11 +79,27 @@ export function ProductCard({ product }: ProductCardProps) {
         </p>
       </CardContent>
 
-      <CardFooter className="p-3">
+      <CardFooter className="grid grid-cols-1 gap-2 p-3">
+        {canAddToCart ? (
+          <AddToCartButton
+            productId={product.id}
+            productName={product.name}
+            snapshot={{
+              name: product.name,
+              unitPrice: product.price,
+              imageUrl: product.imageUrl,
+              imageAlt: product.imageAlt,
+              supplierId: product.supplier.id,
+              supplierName: product.supplier.name,
+            }}
+            disabled={product.stock === 0}
+            compact
+          />
+        ) : null}
         <Link
           href={detailHref}
           className={cn(
-            buttonVariants({ variant: "ghost" }),
+            buttonVariants({ variant: canAddToCart ? "ghost" : "outline" }),
             "w-full justify-between",
           )}
         >

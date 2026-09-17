@@ -11,6 +11,7 @@ import {
   PackageCheck,
 } from "lucide-react";
 
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { ProductMedia } from "@/components/catalog/product-media";
 import { StockStatus } from "@/components/catalog/stock-status";
 import { Badge } from "@/components/ui/badge";
@@ -166,18 +167,33 @@ export default async function ProductDetailPage({
                   </Link>
                 </>
               ) : user.role === "CUSTOMER" ? (
-                <div className="flex items-start gap-3">
-                  <span className="bg-success-subtle text-success-foreground flex size-10 shrink-0 items-center justify-center rounded-lg">
-                    <CheckCircle2 className="size-5" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <h2 className="font-semibold">Customer access confirmed</h2>
-                    <p className="text-muted-foreground mt-1 text-sm leading-6">
-                      Your account is eligible to order. Cart actions will be
-                      introduced in the dedicated ordering step.
-                    </p>
+                <>
+                  <div className="flex items-start gap-3">
+                    <span className="bg-success-subtle text-success-foreground flex size-10 shrink-0 items-center justify-center rounded-lg">
+                      <CheckCircle2 className="size-5" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h2 className="font-semibold">Ready to add</h2>
+                      <p className="text-muted-foreground mt-1 text-sm leading-6">
+                        Add this product to your saved cart. Current price and
+                        stock will be checked whenever the cart changes.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                  <AddToCartButton
+                    productId={product.id}
+                    productName={product.name}
+                    snapshot={{
+                      name: product.name,
+                      unitPrice: product.price,
+                      imageUrl: product.imageUrl,
+                      imageAlt: product.imageAlt,
+                      supplierId: product.supplier.id,
+                      supplierName: product.supplier.name,
+                    }}
+                    className="mt-5"
+                  />
+                </>
               ) : (
                 <>
                   <div className="flex items-start gap-3">
