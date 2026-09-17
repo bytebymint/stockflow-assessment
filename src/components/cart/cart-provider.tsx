@@ -40,7 +40,7 @@ type CartContextValue = {
   addItem: (productId: string, snapshot: CartItemSnapshot) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
-  clearCart: () => void;
+  clearCart: (options?: { announce?: boolean }) => void;
   acceptCurrentPrice: (productId: string) => void;
   refreshCart: () => void;
 };
@@ -285,9 +285,11 @@ export function CartProvider({
     toast.success("Product removed from cart.");
   }, []);
 
-  const clearCart = useCallback(() => {
+  const clearCart = useCallback((options?: { announce?: boolean }) => {
     setStoredItems([]);
-    toast.success("Cart cleared.");
+    if (options?.announce !== false) {
+      toast.success("Cart cleared.");
+    }
   }, []);
 
   const acceptCurrentPrice = useCallback(

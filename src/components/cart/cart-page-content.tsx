@@ -18,6 +18,7 @@ import {
 } from "@/components/cart/cart-provider";
 import { CartFeedback } from "@/components/cart/cart-feedback";
 import { CartItemRow } from "@/components/cart/cart-item-row";
+import { CheckoutButton } from "@/components/cart/checkout-button";
 import { ClearCartDialog } from "@/components/cart/clear-cart-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -250,6 +251,8 @@ export function CartPageContent() {
                   </div>
                 </div>
               </div>
+
+              <CheckoutButton />
 
               <p className="text-muted-foreground mt-4 text-xs leading-5">
                 Each supplier is shown separately so fulfilment remains clear,
