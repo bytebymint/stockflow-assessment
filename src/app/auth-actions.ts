@@ -8,6 +8,7 @@ import { SupplierStatus, UserRole } from "@/generated/prisma/client";
 import type { AuthFormState, AuthField } from "@/lib/auth/form-state";
 import { getSafeReturnTo, getWorkspacePath } from "@/lib/auth/paths";
 import { registrationSchema, signInSchema } from "@/lib/auth/validation";
+import { invalidateAdminDashboardCache } from "@/lib/cache/tags";
 import { getDatabase } from "@/lib/database";
 
 function fieldErrors(
@@ -155,6 +156,10 @@ export async function register(
       message: "We couldn't create your account. Please try again shortly.",
       values: { name, email, role },
     };
+  }
+
+  if (role === "SUPPLIER") {
+    invalidateAdminDashboardCache();
   }
 
   await signIn("credentials", {

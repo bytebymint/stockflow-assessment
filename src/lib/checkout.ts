@@ -11,6 +11,11 @@ import type {
   CheckoutReceipt,
   CheckoutRequest,
 } from "@/lib/checkout-contract";
+import {
+  invalidateAdminDashboardCache,
+  invalidatePublicCatalogCache,
+  invalidateSupplierDashboardCache,
+} from "@/lib/cache/tags";
 import { getDatabase } from "@/lib/database";
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
@@ -24,7 +29,7 @@ type CheckoutRecord = {
     id: string;
     orderNumber: string;
     subtotal: Prisma.Decimal;
-    supplier: { name: string };
+    supplier: { id: string; name: string };
     _count: { items: number };
   }>;
 };
@@ -40,7 +45,7 @@ const checkoutReceiptSelection = {
       id: true,
       orderNumber: true,
       subtotal: true,
-      supplier: { select: { name: true } },
+      supplier: { select: { id: true, name: true } },
       _count: { select: { items: true } },
     },
   },
@@ -382,6 +387,15 @@ export async function createCheckout(
           timeout: 10_000,
         },
       );
+
+      invalidatePublicCatalogCache();
+      invalidateAdminDashboardCache();
+
+      for (const supplierId of new Set(
+        checkout.orders.map((order) => order.supplier.id),
+      )) {
+        invalidateSupplierDashboardCache(supplierId);
+      }
 
       return toReceipt(checkout);
     } catch (error) {

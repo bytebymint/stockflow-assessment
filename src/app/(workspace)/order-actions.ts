@@ -5,6 +5,11 @@ import { z } from "zod";
 
 import { NotificationType, Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth/session";
+import {
+  invalidateAdminDashboardCache,
+  invalidatePublicCatalogCache,
+  invalidateSupplierDashboardCache,
+} from "@/lib/cache/tags";
 import { getDatabase } from "@/lib/database";
 import {
   canAccessOrder,
@@ -207,7 +212,10 @@ export async function transitionOrder(
             });
           }
 
-          return "updated" as const;
+          return {
+            outcome: "updated" as const,
+            supplierId: order.supplierId,
+          };
         },
         {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -238,6 +246,13 @@ export async function transitionOrder(
           message: "That status change is not allowed for this order.",
           refreshRequired: true,
         };
+      }
+
+      invalidateAdminDashboardCache();
+      invalidateSupplierDashboardCache(outcome.supplierId);
+
+      if (targetStatus === "CANCELLED") {
+        invalidatePublicCatalogCache();
       }
 
       revalidateOrderViews(orderId);

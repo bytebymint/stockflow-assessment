@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireApprovedSupplier } from "@/lib/auth/session";
+import { invalidateInventoryCaches } from "@/lib/cache/tags";
 import {
   CloudinaryConfigurationError,
   destroyProductImage,
@@ -50,7 +51,8 @@ function isPrismaError(error: unknown, code: string) {
   );
 }
 
-function refreshProductViews(productId?: string) {
+function refreshProductViews(supplierId: string, productId?: string) {
+  invalidateInventoryCaches(supplierId);
   revalidatePath("/supplier/products");
   revalidatePath("/products");
   revalidatePath("/");
@@ -205,7 +207,7 @@ export async function createProduct(
     };
   }
 
-  refreshProductViews(productId);
+  refreshProductViews(supplier.id, productId);
   redirect("/supplier/products?notice=created");
 }
 
@@ -277,7 +279,7 @@ export async function updateProduct(
     };
   }
 
-  refreshProductViews(parsedId.data);
+  refreshProductViews(supplier.id, parsedId.data);
 
   if (
     currentProduct.imagePublicId &&
@@ -330,7 +332,7 @@ export async function archiveProduct(
     };
   }
 
-  refreshProductViews(parsedId.data);
+  refreshProductViews(supplier.id, parsedId.data);
 
   return {
     status: "success",

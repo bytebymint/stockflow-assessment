@@ -6,6 +6,7 @@ import type {
   CategoryField,
   CategoryFormState,
 } from "@/lib/categories/form-state";
+import { invalidatePublicCatalogCache } from "@/lib/cache/tags";
 import { categoryIdSchema, categorySchema } from "@/lib/categories/validation";
 import { requireRole } from "@/lib/auth/session";
 import { getDatabase } from "@/lib/database";
@@ -45,6 +46,7 @@ function isPrismaError(error: unknown, code: string) {
 }
 
 function refreshCategoryViews() {
+  invalidatePublicCatalogCache();
   revalidatePath("/admin/categories");
   revalidatePath("/products");
   revalidatePath("/");

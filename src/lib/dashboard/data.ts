@@ -1,12 +1,20 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
+
 import {
   OrderStatus,
   SupplierStatus,
   UserRole,
 } from "@/generated/prisma/client";
+import {
+  ADMIN_DASHBOARD_CACHE_TAG,
+  supplierDashboardCacheTag,
+} from "@/lib/cache/tags";
 import { dashboardWindow, type DashboardRange } from "@/lib/dashboard/range";
 import { getDatabase } from "@/lib/database";
+
+const DASHBOARD_REVALIDATE_SECONDS = 60;
 
 function dateKey(value: Date) {
   return value.toISOString().slice(0, 10);
@@ -39,7 +47,7 @@ function orderDateLabel(value: Date) {
   }).format(value);
 }
 
-export async function getSupplierDashboardData(
+async function querySupplierDashboardData(
   supplierId: string,
   range: DashboardRange,
 ) {
@@ -120,11 +128,25 @@ export async function getSupplierDashboardData(
   };
 }
 
+export function getSupplierDashboardData(
+  supplierId: string,
+  range: DashboardRange,
+) {
+  return unstable_cache(
+    () => querySupplierDashboardData(supplierId, range),
+    ["stockflow", "dashboard", "supplier", supplierId, String(range)],
+    {
+      revalidate: DASHBOARD_REVALIDATE_SECONDS,
+      tags: [supplierDashboardCacheTag(supplierId)],
+    },
+  )();
+}
+
 export type SupplierDashboardData = Awaited<
   ReturnType<typeof getSupplierDashboardData>
 >;
 
-export async function getAdminDashboardData(range: DashboardRange) {
+async function queryAdminDashboardData(range: DashboardRange) {
   const database = getDatabase();
   const { start, end } = dashboardWindow(range);
 
@@ -267,10 +289,25 @@ export async function getAdminDashboardData(range: DashboardRange) {
     pendingSupplierCount,
     exportSuppliers: approvedSuppliers,
     pendingSuppliers: pendingSuppliers.map((supplier) => ({
-      ...supplier,
+      id: supplier.id,
+      name: supplier.name,
+      email: supplier.email,
       createdAtLabel: fullDateLabel(supplier.createdAt),
     })),
   };
+}
+
+const getCachedAdminDashboardData = unstable_cache(
+  queryAdminDashboardData,
+  ["stockflow", "dashboard", "admin"],
+  {
+    revalidate: DASHBOARD_REVALIDATE_SECONDS,
+    tags: [ADMIN_DASHBOARD_CACHE_TAG],
+  },
+);
+
+export function getAdminDashboardData(range: DashboardRange) {
+  return getCachedAdminDashboardData(range);
 }
 
 export type AdminDashboardData = Awaited<

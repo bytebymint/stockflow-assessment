@@ -1,12 +1,14 @@
 import "server-only";
 
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { z } from "zod";
 
 import type { Prisma } from "@/generated/prisma/client";
+import { PUBLIC_CATALOG_CACHE_TAG } from "@/lib/cache/tags";
 import { getDatabase } from "@/lib/database";
 
 export const CATALOG_PAGE_SIZE = 6;
+const CATALOG_REVALIDATE_SECONDS = 300;
 
 export const catalogSortOptions = [
   { label: "Featured", value: "featured" },
@@ -197,14 +199,25 @@ function serializeProduct(product: {
   };
 }
 
-export async function getPublicProducts() {
-  const products = await getDatabase().product.findMany({
-    where: publicProductWhere,
-    select: publicProductSelect,
-    orderBy: [{ stock: "desc" }, { name: "asc" }],
-  });
+const getCachedPublicProducts = unstable_cache(
+  async () => {
+    const products = await getDatabase().product.findMany({
+      where: publicProductWhere,
+      select: publicProductSelect,
+      orderBy: [{ stock: "desc" }, { name: "asc" }],
+    });
 
-  return products.map(serializeProduct);
+    return products.map(serializeProduct);
+  },
+  ["stockflow", "catalog", "all-products"],
+  {
+    revalidate: CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOG_CACHE_TAG],
+  },
+);
+
+export function getPublicProducts() {
+  return getCachedPublicProducts();
 }
 
 function catalogWhere(query: CatalogQuery): Prisma.ProductWhereInput {
@@ -271,84 +284,128 @@ function catalogOrderBy(
   }
 }
 
-export async function getPublicCatalogPage(query: CatalogQuery) {
-  const where = catalogWhere(query);
-  const total = await getDatabase().product.count({ where });
-  const pageCount = Math.max(1, Math.ceil(total / CATALOG_PAGE_SIZE));
-  const currentPage = Math.min(query.page, pageCount);
-  const products = await getDatabase().product.findMany({
-    where,
-    select: publicProductSelect,
-    orderBy: catalogOrderBy(query.sort),
-    skip: (currentPage - 1) * CATALOG_PAGE_SIZE,
-    take: CATALOG_PAGE_SIZE,
-  });
+const getCachedPublicCatalogPage = unstable_cache(
+  async (query: CatalogQuery) => {
+    const where = catalogWhere(query);
+    const total = await getDatabase().product.count({ where });
+    const pageCount = Math.max(1, Math.ceil(total / CATALOG_PAGE_SIZE));
+    const currentPage = Math.min(query.page, pageCount);
+    const products = await getDatabase().product.findMany({
+      where,
+      select: publicProductSelect,
+      orderBy: catalogOrderBy(query.sort),
+      skip: (currentPage - 1) * CATALOG_PAGE_SIZE,
+      take: CATALOG_PAGE_SIZE,
+    });
 
-  return {
-    currentPage,
-    pageCount,
-    products: products.map(serializeProduct),
-    total,
-  };
+    return {
+      currentPage,
+      pageCount,
+      products: products.map(serializeProduct),
+      total,
+    };
+  },
+  ["stockflow", "catalog", "page"],
+  {
+    revalidate: CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOG_CACHE_TAG],
+  },
+);
+
+export function getPublicCatalogPage(query: CatalogQuery) {
+  return getCachedPublicCatalogPage(query);
 }
 
-export async function getCatalogFilterOptions() {
-  const [categories, suppliers] = await Promise.all([
-    getDatabase().category.findMany({
-      where: {
-        products: {
-          some: publicProductWhere,
+const getCachedCatalogFilterOptions = unstable_cache(
+  async () => {
+    const [categories, suppliers] = await Promise.all([
+      getDatabase().category.findMany({
+        where: {
+          products: {
+            some: publicProductWhere,
+          },
         },
-      },
-      select: { name: true, slug: true },
-      orderBy: { name: "asc" },
-    }),
-    getDatabase().user.findMany({
-      where: {
-        role: "SUPPLIER",
-        supplierStatus: "APPROVED",
-        products: { some: { archivedAt: null } },
-      },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+        select: { name: true, slug: true },
+        orderBy: { name: "asc" },
+      }),
+      getDatabase().user.findMany({
+        where: {
+          role: "SUPPLIER",
+          supplierStatus: "APPROVED",
+          products: { some: { archivedAt: null } },
+        },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+    ]);
 
-  return { categories, suppliers };
+    return { categories, suppliers };
+  },
+  ["stockflow", "catalog", "filter-options"],
+  {
+    revalidate: CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOG_CACHE_TAG],
+  },
+);
+
+export function getCatalogFilterOptions() {
+  return getCachedCatalogFilterOptions();
 }
 
-export async function getFeaturedProducts() {
-  const products = await getDatabase().product.findMany({
-    where: {
-      ...publicProductWhere,
-      stock: { gt: 0 },
-    },
-    select: publicProductSelect,
-    orderBy: [{ createdAt: "desc" }, { name: "asc" }],
-    take: 4,
-  });
+const getCachedFeaturedProducts = unstable_cache(
+  async () => {
+    const products = await getDatabase().product.findMany({
+      where: {
+        ...publicProductWhere,
+        stock: { gt: 0 },
+      },
+      select: publicProductSelect,
+      orderBy: [{ createdAt: "desc" }, { name: "asc" }],
+      take: 4,
+    });
 
-  return products.map(serializeProduct);
+    return products.map(serializeProduct);
+  },
+  ["stockflow", "catalog", "featured"],
+  {
+    revalidate: CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOG_CACHE_TAG],
+  },
+);
+
+export function getFeaturedProducts() {
+  return getCachedFeaturedProducts();
 }
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export const getPublicProductById = cache(async (id: string) => {
-  if (!uuidPattern.test(id)) {
-    return null;
-  }
+const getCachedPublicProductById = unstable_cache(
+  async (id: string) => {
+    if (!uuidPattern.test(id)) {
+      return null;
+    }
 
-  const product = await getDatabase().product.findFirst({
-    where: {
-      ...publicProductWhere,
-      id,
-    },
-    select: publicProductSelect,
-  });
+    const product = await getDatabase().product.findFirst({
+      where: {
+        ...publicProductWhere,
+        id,
+      },
+      select: publicProductSelect,
+    });
 
-  return product ? serializeProduct(product) : null;
-});
+    return product ? serializeProduct(product) : null;
+  },
+  ["stockflow", "catalog", "product"],
+  {
+    revalidate: CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOG_CACHE_TAG],
+  },
+);
+
+export function getPublicProductById(id: string) {
+  return getCachedPublicProductById(id);
+}
 
 export function formatPrice(price: string) {
   return new Intl.NumberFormat("en-GB", {

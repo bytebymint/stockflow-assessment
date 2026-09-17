@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 
 import { NotificationType, UserRole } from "@/generated/prisma/client";
 import { requireRole } from "@/lib/auth/session";
+import {
+  invalidateAdminDashboardCache,
+  invalidatePublicCatalogCache,
+  invalidateSupplierDashboardCache,
+} from "@/lib/cache/tags";
 import { getDatabase } from "@/lib/database";
 import type { SupplierDecisionState } from "@/lib/suppliers/form-state";
 import { supplierDecisionSchema } from "@/lib/suppliers/validation";
@@ -29,7 +34,10 @@ const notificationContent = {
   },
 } as const;
 
-function refreshSupplierViews() {
+function refreshSupplierViews(supplierId: string) {
+  invalidatePublicCatalogCache();
+  invalidateAdminDashboardCache();
+  invalidateSupplierDashboardCache(supplierId);
   revalidatePath("/admin");
   revalidatePath("/admin/suppliers");
   revalidatePath("/supplier");
@@ -138,7 +146,7 @@ export async function updateSupplierStatus(
       };
     }
 
-    refreshSupplierViews();
+    refreshSupplierViews(supplierId);
 
     return {
       status: "success",
