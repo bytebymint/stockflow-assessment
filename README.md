@@ -8,8 +8,8 @@ and customers browse a public catalog and place multi-supplier orders.
 ## Live application
 
 - Repository: https://github.com/bytebymint/stockflow-assessment (private during review)
-- Deployment: Vercel deployment is intentionally deferred until the final delivery stage
-- Database health: `/api/health/database`
+- Deployment: https://project-gwt75.vercel.app
+- Database health: https://project-gwt75.vercel.app/api/health/database
 
 ### Evaluator accounts
 
@@ -209,7 +209,12 @@ text resizing, and responsive layouts at 375, 768, 1024, and 1440 pixels.
 
 ## Deployment
 
-The production design uses Vercel, Neon PostgreSQL, and Cloudinary:
+The deployed production stack uses Vercel, Neon PostgreSQL, and Cloudinary.
+The database migration and deterministic seed have been applied, the health
+endpoint reports a reachable database, all four evaluator roles have been smoke
+tested, and an approved supplier can obtain a signed Cloudinary upload request.
+
+To reproduce the deployment:
 
 1. Create a Neon database and save both pooled and direct connection strings.
 2. Configure all variables from `.env.example` in Vercel. Use the pooled Neon
@@ -257,7 +262,7 @@ tests/e2e/               role journeys and responsive accessibility audit
 | Status workflow and restocking | Central transition policy and transactional cancellation |
 | Two or more admin aggregates   | Metrics, low stock, daily orders, supplier revenue       |
 | Product image upload           | Signed Cloudinary upload and verified persistence        |
-| Public deployment              | Pending the final, user-approved Vercel delivery stage   |
+| Public deployment              | Live Vercel app backed by Neon PostgreSQL and Cloudinary |
 | Search, filter, pagination     | URL-driven server-side catalog discovery                 |
 | Notifications                  | Role-specific in-app notification center                 |
 | Supplier approval              | Admin review and protected supplier states               |
